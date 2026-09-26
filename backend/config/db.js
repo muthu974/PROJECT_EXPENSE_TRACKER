@@ -6,9 +6,9 @@ const connectDB = async () => {
       serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
     });
-    console.log(`✅ MongoDB Atlas Connected: ${conn.connection.host}`);
+    console.log(` MongoDB Atlas Connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error(`❌ MongoDB Connection Error: ${error.message}`);
+    console.error(`MongoDB Connection Error: ${error.message}`);
     process.exit(1);
   }
 };

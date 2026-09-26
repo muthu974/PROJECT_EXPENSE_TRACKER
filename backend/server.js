@@ -7,6 +7,7 @@ const budgetRoutes = require('./routes/budgetRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const { Transaction } = require('./models/Transaction');
+const dns = require("dns");
 
 dotenv.config();
 
@@ -15,6 +16,8 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+dns.setServers(['8.8.8.8']);
+
 
 // API Routes
 app.use('/api/transactions', transactionRoutes);
@@ -71,13 +74,13 @@ app.use(errorHandler);
 
 connectDB().then(() => {
   const server = app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
   });
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-      console.error(`\n⚠️  Port ${PORT} is already in use by another running process.`);
-      console.error(`👉 Run this in PowerShell to free it:\n   Stop-Process -Id (Get-NetTCPConnection -LocalPort ${PORT}).OwningProcess -Force\n`);
+      console.error(`\n  Port ${PORT} is already in use by another running process.`);
+      console.error(` Run this in PowerShell to free it:\n   Stop-Process -Id (Get-NetTCPConnection -LocalPort ${PORT}).OwningProcess -Force\n`);
     } else {
       console.error('Server error:', err);
     }
