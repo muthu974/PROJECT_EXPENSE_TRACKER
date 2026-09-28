@@ -5,11 +5,12 @@ const { Transaction } = require('../models/Transaction');
 const getBudgets = async (req, res) => {
   try {
     const { month } = req.query;
-    const filter = month ? { month } : {};
+    const filter = { user: req.user._id };
+    if (month) filter.month = month;
 
     const budgets = await Budget.find(filter).sort({ category: 1 });
 
-    // If month is provided, also compute actual spending per category
+    // If month is provided, also compute actual spending per category for this user
     let spending = {};
     if (month) {
       const [year, mon] = month.split('-').map(Number);
@@ -17,6 +18,7 @@ const getBudgets = async (req, res) => {
       const endDate = new Date(year, mon, 0, 23, 59, 59, 999);
 
       const transactions = await Transaction.find({
+        user: req.user._id,
         type: 'expense',
         date: { $gte: startDate, $lte: endDate }
       });
@@ -65,10 +67,10 @@ const createOrUpdateBudget = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Limit must be a positive number' });
     }
 
-    // Upsert: create or update existing budget for month+category
+    // Upsert: create or update existing budget for user + month + category
     const budget = await Budget.findOneAndUpdate(
-      { month, category },
-      { limit: parsedLimit },
+      { user: req.user._id, month, category },
+      { limit: parsedLimit, user: req.user._id },
       { new: true, upsert: true, runValidators: true }
     );
 
@@ -86,7 +88,7 @@ const createOrUpdateBudget = async (req, res) => {
 // DELETE /api/budgets/:id
 const deleteBudget = async (req, res) => {
   try {
-    const budget = await Budget.findByIdAndDelete(req.params.id);
+    const budget = await Budget.findOneAndDelete({ _id: req.params.id, user: req.user._id });
     if (!budget) {
       return res.status(404).json({ success: false, message: 'Budget not found' });
     }

@@ -6,6 +6,7 @@ const getMonthlyTrends = async (req, res) => {
     const monthsBack = parseInt(req.query.months) || 6;
 
     const results = await Transaction.aggregate([
+      { $match: { user: req.user._id } },
       {
         $group: {
           _id: {
@@ -43,7 +44,7 @@ const getMonthlyTrends = async (req, res) => {
 const getTopCategories = async (req, res) => {
   try {
     const { month } = req.query;
-    const matchStage = { type: 'expense' };
+    const matchStage = { user: req.user._id, type: 'expense' };
 
     if (month) {
       const [year, mon] = month.split('-').map(Number);

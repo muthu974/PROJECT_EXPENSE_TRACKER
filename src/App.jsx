@@ -1,8 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import Dashboard from './pages/Dashboard';
 import Analytics from './pages/Analytics';
 import Budgets from './pages/Budgets';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Profile from './pages/Profile';
+import { useAuth } from './context/AuthContext';
 import './App.css';
 
 const API_BASE = '/api/transactions';
@@ -10,8 +14,12 @@ const API_BASE = '/api/transactions';
 let toastId = 0;
 
 function App() {
-  const [page, setPage] = useState('dashboard'); // 'dashboard' | 'analytics' | 'budgets'
+  const { user, loading: authLoading, logout } = useAuth();
+  const [authView, setAuthView] = useState('login'); // 'login' | 'register'
+  const [page, setPage] = useState('dashboard');
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef(null);
 
   const [transactions, setTransactions] = useState([]);
   const [summary, setSummary] = useState({ totalIncome: 0, totalExpenses: 0, balance: 0, categorySummary: {} });
@@ -26,6 +34,17 @@ function App() {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  // Close profile dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const showToast = useCallback((message, type = 'success') => {
     const id = ++toastId;
@@ -69,8 +88,8 @@ function App() {
     }
   }, [filters]);
 
-  useEffect(() => { fetchCategories(); }, [fetchCategories]);
-  useEffect(() => { fetchTransactions(); }, [fetchTransactions]);
+  useEffect(() => { if (user) fetchCategories(); }, [fetchCategories, user]);
+  useEffect(() => { if (user) fetchTransactions(); }, [fetchTransactions, user]);
 
   const addTransaction = async (data) => {
     try {
@@ -112,14 +131,81 @@ function App() {
     }
   };
 
-  const exportCSV = () => {
-    const params = new URLSearchParams();
-    if (filters.month) params.append('month', filters.month);
-    if (filters.type) params.append('type', filters.type);
-    if (filters.category) params.append('category', filters.category);
-    window.open(`/api/export/csv?${params.toString()}`, '_blank');
-    showToast('Exporting CSV...', 'info');
+  const exportCSV = async () => {
+    try {
+      showToast('Exporting CSV...', 'info');
+      const params = {};
+      if (filters.month) params.month = filters.month;
+      if (filters.type) params.type = filters.type;
+      if (filters.category) params.category = filters.category;
+
+      const res = await axios.get('/api/export/csv', { params, responseType: 'blob' });
+      const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'transactions.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showToast('CSV exported successfully! 📄', 'success');
+    } catch (err) {
+      showToast('Failed to export CSV', 'error');
+    }
   };
+
+  // Show full-page loading while verifying auth token
+  if (authLoading) {
+    return (
+      <div className="loading-screen" style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+        <div className="spinner" />
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // Show auth pages if not logged in
+  if (!user) {
+    return (
+      <>
+        {authView === 'login' ? (
+          <Login onSwitch={() => setAuthView('register')} showToast={showToast} />
+        ) : (
+          <Register onSwitch={() => setAuthView('login')} showToast={showToast} />
+        )}
+        <div className="toast-container">
+          {toasts.map((t) => (
+            <div key={t.id} className={`toast toast-${t.type}`}>
+              {t.type === 'success' && '✅'}
+              {t.type === 'error' && '❌'}
+              {t.type === 'info' && 'ℹ️'}
+              {t.message}
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  // Profile page (full screen)
+  if (page === 'profile') {
+    return (
+      <>
+        <Profile showToast={showToast} onBack={() => setPage('dashboard')} />
+        <div className="toast-container">
+          {toasts.map((t) => (
+            <div key={t.id} className={`toast toast-${t.type}`}>
+              {t.type === 'success' && '✅'}
+              {t.type === 'error' && '❌'}
+              {t.type === 'info' && 'ℹ️'}
+              {t.message}
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
 
   const navItems = [
     { key: 'dashboard', icon: '🏠', label: 'Dashboard' },
@@ -156,6 +242,44 @@ function App() {
             >
               {theme === 'light' ? '🌙' : '☀️'}
             </button>
+
+            {/* Profile dropdown */}
+            <div className="profile-dropdown-wrap" ref={profileRef}>
+              <button
+                className="profile-trigger-btn"
+                onClick={() => setProfileOpen((v) => !v)}
+                title="Account"
+              >
+                <span className="profile-trigger-avatar">{user.avatar || '👤'}</span>
+                <span className="profile-trigger-name">{user.name?.split(' ')[0]}</span>
+                <span className="profile-trigger-chevron">{profileOpen ? '▲' : '▼'}</span>
+              </button>
+
+              {profileOpen && (
+                <div className="profile-dropdown">
+                  <div className="profile-dropdown-header">
+                    <span className="profile-dropdown-avatar">{user.avatar || '👤'}</span>
+                    <div>
+                      <p className="profile-dropdown-name">{user.name}</p>
+                      <p className="profile-dropdown-email">{user.email}</p>
+                    </div>
+                  </div>
+                  <div className="profile-dropdown-divider" />
+                  <button
+                    className="profile-dropdown-item"
+                    onClick={() => { setPage('profile'); setProfileOpen(false); }}
+                  >
+                    👤 My Profile
+                  </button>
+                  <button
+                    className="profile-dropdown-item profile-dropdown-logout"
+                    onClick={() => { logout(); setProfileOpen(false); }}
+                  >
+                    🚪 Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -169,7 +293,7 @@ function App() {
 
         {loading && transactions.length === 0 ? (
           <div className="loading-screen">
-            <div className="spinner"></div>
+            <div className="spinner" />
             <p>Loading your data...</p>
           </div>
         ) : (

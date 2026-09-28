@@ -115,7 +115,7 @@ function Budgets({ categories, showToast }) {
           <div className="budget-stat">
             <span className="budget-stat-label">Over Budget</span>
             <span className="budget-stat-value" style={{ color: overBudget > 0 ? 'var(--danger)' : 'var(--success)' }}>
-              {overBudget} category{overBudget !== 1 ? 'ies' : 'y'}
+              {overBudget} categor{overBudget !== 1 ? 'ies' : 'y'}
             </span>
           </div>
         </div>

@@ -21,6 +21,11 @@ const INCOME_CATEGORIES = [
 
 const transactionSchema = new mongoose.Schema(
   {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'User is required']
+    },
     amount: {
       type: Number,
       required: [true, 'Amount is required'],
@@ -69,9 +74,9 @@ transactionSchema.pre('validate', function (next) {
   next();
 });
 
-transactionSchema.index({ date: -1 });
-transactionSchema.index({ type: 1 });
-transactionSchema.index({ category: 1 });
+transactionSchema.index({ user: 1, date: -1 });
+transactionSchema.index({ user: 1, type: 1 });
+transactionSchema.index({ user: 1, category: 1 });
 
 const Transaction = mongoose.model('Transaction', transactionSchema);
 

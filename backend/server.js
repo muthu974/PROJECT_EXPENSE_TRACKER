@@ -5,8 +5,10 @@ const connectDB = require('./config/db');
 const transactionRoutes = require('./routes/transactionRoutes');
 const budgetRoutes = require('./routes/budgetRoutes');
 const statsRoutes = require('./routes/statsRoutes');
+const authRoutes = require('./routes/authRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const { Transaction } = require('./models/Transaction');
+const { protect } = require('./middleware/auth');
 const dns = require("dns");
 
 dotenv.config();
@@ -20,6 +22,7 @@ dns.setServers(['8.8.8.8']);
 
 
 // API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/stats', statsRoutes);
@@ -30,10 +33,10 @@ app.get('/api/health', (req, res) => {
 });
 
 // CSV Export
-app.get('/api/export/csv', async (req, res) => {
+app.get('/api/export/csv', protect, async (req, res) => {
   try {
     const { month, type, category } = req.query;
-    const filter = {};
+    const filter = { user: req.user._id };
 
     if (month) {
       const [year, mon] = month.split('-').map(Number);

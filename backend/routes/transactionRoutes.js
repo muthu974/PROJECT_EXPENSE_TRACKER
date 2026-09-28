@@ -7,8 +7,13 @@ const {
   deleteTransaction,
   getCategories
 } = require('../controllers/transactionController');
+const { protect } = require('../middleware/auth');
 
 router.get('/categories', getCategories);
+
+// All subsequent transaction routes require authentication
+router.use(protect);
+
 router.get('/', getTransactions);
 router.post('/', createTransaction);
 router.put('/:id', updateTransaction);

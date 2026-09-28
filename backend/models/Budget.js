@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 
 const budgetSchema = new mongoose.Schema(
   {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'User is required']
+    },
     month: {
       type: String,
       required: [true, 'Month is required'],
@@ -23,8 +28,8 @@ const budgetSchema = new mongoose.Schema(
   }
 );
 
-// Unique budget per month+category combination
-budgetSchema.index({ month: 1, category: 1 }, { unique: true });
+// Unique budget per user + month + category combination
+budgetSchema.index({ user: 1, month: 1, category: 1 }, { unique: true });
 
 const Budget = mongoose.model('Budget', budgetSchema);
 

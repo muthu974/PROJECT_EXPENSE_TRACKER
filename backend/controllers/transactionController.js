@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const getTransactions = async (req, res) => {
   try {
     const { month, category, type } = req.query;
-    const filter = {};
+    const filter = { user: req.user._id };
 
     if (month) {
       const monthRegex = /^\d{4}-\d{2}$/;
@@ -97,6 +97,7 @@ const createTransaction = async (req, res) => {
     }
 
     const transaction = await Transaction.create({
+      user: req.user._id,
       amount: parsedAmount,
       type,
       category,
@@ -160,8 +161,8 @@ const updateTransaction = async (req, res) => {
       });
     }
 
-    const transaction = await Transaction.findByIdAndUpdate(
-      id,
+    const transaction = await Transaction.findOneAndUpdate(
+      { _id: id, user: req.user._id },
       {
         amount: parsedAmount,
         type,
@@ -210,7 +211,7 @@ const deleteTransaction = async (req, res) => {
       });
     }
 
-    const transaction = await Transaction.findByIdAndDelete(id);
+    const transaction = await Transaction.findOneAndDelete({ _id: id, user: req.user._id });
 
     if (!transaction) {
       return res.status(404).json({
