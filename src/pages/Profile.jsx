@@ -3,15 +3,6 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import './Profile.css';
 
-const CURRENCIES = [
-  { code: 'INR', symbol: '₹', label: 'Indian Rupee' },
-  { code: 'USD', symbol: '$', label: 'US Dollar' },
-  { code: 'EUR', symbol: '€', label: 'Euro' },
-  { code: 'GBP', symbol: '£', label: 'British Pound' },
-  { code: 'JPY', symbol: '¥', label: 'Japanese Yen' },
-  { code: 'CAD', symbol: 'C$', label: 'Canadian Dollar' },
-  { code: 'AUD', symbol: 'A$', label: 'Australian Dollar' },
-];
 
 const AVATAR_OPTIONS = ['👤', '👨', '👩', '🧔', '👱', '🧑', '👨‍💼', '👩‍💼', '🦸', '🧙'];
 
@@ -20,7 +11,6 @@ export default function Profile({ showToast, onBack }) {
 
   const [profileForm, setProfileForm] = useState({
     name: user?.name || '',
-    currency: user?.currency || 'INR',
     avatar: user?.avatar || '👤'
   });
   const [passForm, setPassForm] = useState({ currentPassword: '', newPassword: '', confirm: '' });
@@ -44,7 +34,6 @@ export default function Profile({ showToast, onBack }) {
     try {
       const res = await axios.put('/api/auth/profile', {
         name: profileForm.name,
-        currency: profileForm.currency,
         avatar: profileForm.avatar
       });
       if (res.data.success) {
@@ -169,22 +158,6 @@ export default function Profile({ showToast, onBack }) {
               <small>Email cannot be changed</small>
             </div>
 
-            <div className="profile-field">
-              <label htmlFor="profile-currency">Preferred Currency</label>
-              <select
-                id="profile-currency"
-                name="currency"
-                value={profileForm.currency}
-                onChange={handleProfileChange}
-                disabled={profileLoading}
-              >
-                {CURRENCIES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.symbol} {c.label} ({c.code})
-                  </option>
-                ))}
-              </select>
-            </div>
 
             <div className="profile-field">
               <label>Choose Avatar</label>
@@ -228,7 +201,7 @@ export default function Profile({ showToast, onBack }) {
             <div className="profile-field">
               <label htmlFor="curr-pass">Current Password</label>
               <div className="auth-input-wrap">
-                <span className="auth-input-icon">🔑</span>
+                
                 <input
                   id="curr-pass"
                   type={showPasswords ? 'text' : 'password'}
@@ -244,7 +217,7 @@ export default function Profile({ showToast, onBack }) {
             <div className="profile-field">
               <label htmlFor="new-pass">New Password</label>
               <div className="auth-input-wrap">
-                <span className="auth-input-icon">🔒</span>
+      
                 <input
                   id="new-pass"
                   type={showPasswords ? 'text' : 'password'}
@@ -260,7 +233,7 @@ export default function Profile({ showToast, onBack }) {
             <div className="profile-field">
               <label htmlFor="confirm-pass">Confirm New Password</label>
               <div className="auth-input-wrap">
-                <span className="auth-input-icon">🔐</span>
+                
                 <input
                   id="confirm-pass"
                   type={showPasswords ? 'text' : 'password'}

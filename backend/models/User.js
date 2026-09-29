@@ -26,10 +26,6 @@ const userSchema = new mongoose.Schema(
     avatar: {
       type: String,
       default: ''
-    },
-    currency: {
-      type: String,
-      default: 'INR'
     }
   },
   { timestamps: true }

@@ -38,7 +38,6 @@ const register = async (req, res) => {
           name: user.name,
           email: user.email,
           avatar: user.avatar,
-          currency: user.currency,
           createdAt: user.createdAt
         }
       }
@@ -89,7 +88,6 @@ const login = async (req, res) => {
           name: user.name,
           email: user.email,
           avatar: user.avatar,
-          currency: user.currency,
           createdAt: user.createdAt
         }
       }
@@ -111,7 +109,6 @@ const getMe = async (req, res) => {
         name: req.user.name,
         email: req.user.email,
         avatar: req.user.avatar,
-        currency: req.user.currency,
         createdAt: req.user.createdAt
       }
     }
@@ -122,10 +119,9 @@ const getMe = async (req, res) => {
 // @route   PUT /api/auth/profile
 const updateProfile = async (req, res) => {
   try {
-    const { name, currency, avatar } = req.body;
+    const { name, avatar } = req.body;
     const updates = {};
     if (name) updates.name = name;
-    if (currency) updates.currency = currency;
     if (avatar !== undefined) updates.avatar = avatar;
 
     const user = await User.findByIdAndUpdate(req.user._id, updates, {
@@ -142,7 +138,6 @@ const updateProfile = async (req, res) => {
           name: user.name,
           email: user.email,
           avatar: user.avatar,
-          currency: user.currency,
           createdAt: user.createdAt
         }
       }
